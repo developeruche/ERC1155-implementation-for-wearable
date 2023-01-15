@@ -1,34 +1,40 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
-// Uncomment this line to use console.log
-// import "hardhat/console.sol";
+import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Burnable.sol";
+import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
 
-contract Lock {
-    uint public unlockTime;
-    address payable public owner;
 
-    event Withdrawal(uint amount, uint when);
+/// @notice this conttract is an implementation for the erc1155 nft token standard
+contract MyNFT is ERC1155, Ownable, ERC1155Burnable, ERC1155Supply{
+constructor() ERC1155("DEVELOPERUCHE MULTITOKEN") {}
 
-    constructor(uint _unlockTime) payable {
-        require(
-            block.timestamp < _unlockTime,
-            "Unlock time should be in the future"
-        );
-
-        unlockTime = _unlockTime;
-        owner = payable(msg.sender);
+    function setURI(string memory newuri) public onlyOwner {
+        _setURI(newuri);
     }
 
-    function withdraw() public {
-        // Uncomment this line, and the import of "hardhat/console.sol", to print a log in your terminal
-        // console.log("Unlock time is %o and block timestamp is %o", unlockTime, block.timestamp);
+    function mint(address account, uint256 id, uint256 amount, bytes memory data)
+        public
+        onlyOwner
+    {
+        _mint(account, id, amount, data);
+    }
 
-        require(block.timestamp >= unlockTime, "You can't withdraw yet");
-        require(msg.sender == owner, "You aren't the owner");
+    function mintBatch(address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data)
+        public
+        onlyOwner
+    {
+        _mintBatch(to, ids, amounts, data);
+    }
 
-        emit Withdrawal(address(this).balance, block.timestamp);
+    // The following functions are overrides required by Solidity.
 
-        owner.transfer(address(this).balance);
+    function _beforeTokenTransfer(address operator, address from, address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data)
+        internal
+        override(ERC1155, ERC1155Supply)
+    {
+        super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
     }
 }
